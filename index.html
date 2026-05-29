@@ -319,6 +319,10 @@ section{padding:80px 48px;border-top:1px solid var(--border);position:relative;z
 .t-dot.r{background:#ef4444}.t-dot.a{background:#f59e0b}.t-dot.g{background:#22c55e}
 .terminal-title{font-size:11px;color:var(--muted);margin-left:6px;letter-spacing:0.06em}
 .terminal-body{padding:20px;font-size:13px;line-height:2.1;color:var(--muted)}
+.terminal-input-row{display:flex;align-items:center;gap:8px;padding:0 20px 16px}
+.terminal-prompt{color:var(--green);font-family:var(--mono);font-size:13px}
+#termInput{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:var(--mono);font-size:13px;caret-color:var(--green)}
+#termInput::placeholder{color:var(--muted)}
 .t-g{color:#00c8a0}.t-b{color:#3b82f6}.t-a{color:#f59e0b}.t-w{color:var(--text)}
 .t-p::before{content:'$ ';color:#00c8a0;opacity:0.55}
 
@@ -339,6 +343,15 @@ footer{
   transition:all .3s cubic-bezier(.34,1.56,.64,1);z-index:9999;font-weight:700;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.spark{
+  position:fixed;pointer-events:none;z-index:9998;
+  width:6px;height:6px;border-radius:50%;
+  background:var(--green);opacity:1;
+  transform:translate(-50%,-50%);
+  animation:sparkFade .6s ease forwards;
+}
+@keyframes sparkFade{to{opacity:0;transform:translate(-50%,-50%) scale(0)}}
 
 /* RESPONSIVE */
 @media(max-width:820px){
@@ -404,7 +417,6 @@ footer{
         <span class="tag amber">Automation</span>
       </div>
     </div>
-  </div>
   </div>
 </div>
 
@@ -569,19 +581,14 @@ footer{
     <div class="terminal">
       <div class="terminal-bar">
         <div class="t-dot r"></div><div class="t-dot a"></div><div class="t-dot g"></div>
-        <span class="terminal-title">bash — contact.sh</span>
+        <span class="terminal-title">bash — interactive</span>
       </div>
-      <div class="terminal-body">
-        <div class="t-p t-g">whoami</div>
-        <div class="t-w">Dinh Quan Le — dev, builder, collab-seeker</div><br>
-        <div class="t-p t-g">cat status.txt</div>
-        <div class="t-a">► Open to projects &amp; collabs</div>
-        <div class="t-a">► Available for freelance</div>
-        <div class="t-a">► Always down to build something cool</div><br>
-        <div class="t-p t-g">ping Quan120977@gmail.com</div>
-        <div class="t-w">REPLY: time=<span class="t-g">&lt;24hrs</span></div><br>
-        <div class="t-p t-g">send --msg "let's build"</div>
-        <div style="color:#22c55e">✓ Message sent. Talk soon!</div>
+      <div class="terminal-body" id="termBody">
+        <div class="t-g" style="margin-bottom:8px">Welcome to DQL terminal. Type <span class="t-w">help</span> to get started.</div>
+      </div>
+      <div class="terminal-input-row">
+        <span class="terminal-prompt">$</span>
+        <input id="termInput" type="text" placeholder="type a command..." autocomplete="off"/>
       </div>
     </div>
   </div>
@@ -723,6 +730,80 @@ window.addEventListener('load', ()=>{
   const curiosity = document.getElementById('stat2');
   if(curiosity) curiosity.textContent = '∞';
 });
+
+document.addEventListener('mousemove', e => {
+  const s = document.createElement('div');
+  s.className = 'spark';
+  const size = Math.random() * 6 + 3;
+  s.style.width = size + 'px';
+  s.style.height = size + 'px';
+  s.style.left = e.clientX + 'px';
+  s.style.top = e.clientY + 'px';
+  document.body.appendChild(s);
+  setTimeout(()=>s.remove(), 600);
+});
+
+const brandEl = document.querySelector('.nav-brand');
+if(brandEl){
+  let brandClicks = 0, brandTimer;
+  brandEl.style.cursor = 'pointer';
+  brandEl.addEventListener('click', ()=>{
+    brandClicks++;
+    clearTimeout(brandTimer);
+    brandTimer = setTimeout(()=>brandClicks = 0, 1000);
+    if(brandClicks >= 5){
+      brandClicks = 0;
+      const morse = '-.. --.- .-..';
+      const el = document.createElement('div');
+      el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--green);color:var(--green);font-family:var(--mono);font-size:13px;padding:12px 24px;z-index:9999;letter-spacing:0.2em;animation:sparkFade 3s ease forwards;';
+      el.textContent = 'DQL in morse: ' + morse;
+      document.body.appendChild(el);
+      setTimeout(()=>el.remove(),3000);
+    }
+  });
+}
+
+const termCmds = {
+  help:    ()=>'Commands: <span class="t-g">help</span> · <span class="t-g">about</span> · <span class="t-g">contact</span> · <span class="t-g">skills</span> · <span class="t-g">team</span> · <span class="t-g">clear</span>',
+  about:   ()=>'<span class="t-w">Dinh Quan Le</span> — developer, builder, engineer. Always shipping.',
+  contact: ()=>'Email: <span class="t-g">Quan120977@gmail.com</span> · GitHub: <span class="t-g">quanle120977-lab</span>',
+  skills:  ()=>'React · TypeScript · Node.js · Python · Docker · CSS · Git',
+  team:    ()=>'<span class="t-w">DQ</span> (lead) · <span class="t-w">Bach Le</span> · <span class="t-w">Patrick</span> · <span class="t-w">Ash</span>',
+  clear:   ()=>'__clear__',
+};
+
+function appendTermLine(text, className='t-w'){
+  const body = document.getElementById('termBody');
+  if(!body) return;
+  const div = document.createElement('div');
+  div.className = className;
+  div.innerHTML = text;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+function handleTerm(e){
+  if(e.key !== 'Enter') return;
+  const input = e.target;
+  const value = input.value.trim().toLowerCase();
+  if(!value) return;
+  appendTermLine('<span class="t-p">bash</span> ' + value, 't-p');
+  input.value = '';
+  const command = value.split(' ')[0];
+  const output = termCmds[command] ? termCmds[command]() : 'Command not found: <span class="t-w">' + command + '</span>';
+  if(output === '__clear__'){
+    const body = document.getElementById('termBody');
+    if(body) body.innerHTML = '';
+    appendTermLine('<span class="t-g">Terminal cleared.</span>', 't-g');
+  } else {
+    appendTermLine(output, 't-g');
+  }
+}
+
+const termInput = document.getElementById('termInput');
+if(termInput){
+  termInput.addEventListener('keydown', handleTerm);
+}
 
 </script>
 <script>
